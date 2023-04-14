@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bate-Papo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #mensagens {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        #mensagem {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+        #canais {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .canal {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-container">
+        <h1>Faça login para acessar o bate-papo</h1>
+        <form id="login-form">
+            <label for="username">Nome de usuário:</label>
+            <input type="text" id="username" name="username">
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+    <div id="chat-container" style="display: none;">
+        <div id="canais">
+            <div class="canal">
+                <button onclick="mudarCanal('bate-papo-1')">Bate Papo 1</button>
+            </div>
+            <div class="canal">
+                <button onclick="mudarCanal('bate-papo-2')">Bate Papo 2</button>
+            </div>
+            <div class="canal">
+                <button onclick="mudarCanal('bate-papo-3')">Bate Papo 3</button>
+            </div>
+        </div>
+        <ul id="mensagens"></ul>
+        <form id="enviar-mensagem-form">
+            <input type="text" id="mensagem" placeholder="Digite sua mensagem aqui...">
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const loginContainer = document.querySelector('#login-container');
+        const chatContainer = document.querySelector('#chat-container');
+        const loginForm = document.querySelector('#login-form');
+        const enviarMensagemForm = document.querySelector('#enviar-mensagem-form');
+        const usernameInput = document.querySelector('#username');
+        const mensagensList = document.querySelector('#mensagens');
+        const mensagemInput = document.querySelector('#mensagem');
+        let currentChannel = '';
+
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+if (usernameInput.value) {
+    socket.emit('login', usernameInput.value);
+    loginContainer.style.display = 'none';
+    chatContainer.style.display = 'block';
+    currentChannel = 'bate-papo-1';
+    socket.emit('mudar-canal', currentChannel);
+}
+});
+
+enviarMensagemForm.addEventListener('submit', (event) => {
+event.preventDefault();
+
+if (mensagemInput.value) {
+    socket.emit('enviar-mensagem', { mensagem: mensagemInput.value, canal: currentChannel });
+    mensagemInput.value = '';
+}
+});
+
+function mudarCanal(canal) {
+currentChannel = canal;
+socket.emit('mudar-canal', canal);
+}
+
+socket.on('mensagem-recebida', (data) => {
+    console.log('mensagem')
+const mensagemItem = document.createElement('li');
+mensagemItem.innerText = `${data.usuario}: ${data.mensagem}`;
+mensagensList.appendChild(mensagemItem);
+mensagensList.scrollTop = mensagensList.scrollHeight;
+});
+</script>
+</body>
+</html>
+
